@@ -79,12 +79,11 @@ class personnel():
     #Constraint 2
     #Return a rating of how busy a person is starting from a given date
     def busyness(self,date):
-        relevant = list(filter(lambda x:x.end>=date,self.engagements))
         busy = 0
-        for each in relevant:
+        for each in self.engagements:
             busyratio = each.hours/each.deadline #assume constant throughout all days
-            weight = 1/(each.end - date).days  ###??? If the job ending soon, larger weightage? Don't make sense
-            busy += busyratio*weight
+            weight = 1/(abs((each.end - date).days)+1)  ###??? If the job ending soon, larger weightage? Don't make sense
+            busy += busyratio*weight #+1 to prevent 
         return busy
     
     #Constraint 3A
@@ -153,21 +152,29 @@ class engagement():
     # Need to check capacity and remind the person if he still want to continue  
     ### Check whether the priority person should/should not be added into the engagementss
     def priority(self,person): 
-        self.involved.append(person)
-        person.engagements.append(self)
-        self.requirement -= 1
+        if person in self.involved:
+          return person.name + " has been assigned to this engagement"
+        elif self.requirement == 0:
+          return "Requirement has already been fulfilled"
+        else:
+          self.involved.append(person)
+          person.engagements.append(self)
+          self.requirement -= 1
    
     #Random assignment of personnel to the engagement, subject to constraint 1,2 and 3
     def assignment(self,selected_schedule): #TBC
         all_personnel = deepcopy(selected_schedule.allpersonnels)  #kapok from schedule
         all_personnel = list(filter(lambda x: x not in self.involved,all_personnel))
+        
+        if self.requirement == 0:
+          return "Requirement has already been fulfilled"
         while self.requirement != 0:
             #filter bottom 50th percentile 
             ls=[]
             all_personnel.sort(key = lambda x: x.capacity(self.start))
             for free in all_personnel[:int(0.5*len(all_personnel))+1]: #constraint 1:Capacity
                 ls.append(free)
-            ls.sort(key=lambda x: x.busyness(self.start))
+            ls.sort(key=lambda x: x.busyness(self.end))
             for slack in ls: #constraint 2: Busyness
                 ls=ls[:int(0.5*len(ls))+1]
             ls.sort(key=lambda x: x.diff_scale(self.start))
@@ -231,6 +238,8 @@ class schedule():
     
     #Assign personnel into particular engagement
     def assign_engagement(self,selected_engagement,*wanted_personnel):
+        if selected_engagement not in self.allengagements:
+            return "Remember to add engagement"
         if wanted_personnel:
             for each in wanted_personnel:
                 selected_engagement.priority(each)
@@ -265,17 +274,17 @@ class schedule():
 
 ####################################### Questions ################################################
 # How do i store the relevant information in a proper format?
-# Where do i extract the information from?
-#
-#
+# How and where do i extract the information from?
+# Auto exit is not done yet
+# Problem for assignment: It is current not attached to a variable, should i do it instead?
 #
 #       
 #
+# If you add the wrong engagement you have to del and re-add it. Does that mean, end it. wil it
+# Will it be in the record.
 #
 #
-#
-#
-##################################################################################################   
+##################################################################################################     
     
     
         
