@@ -307,6 +307,12 @@ tryout.new_personnel(Rajesh)
 tryout.add_engagement(project_A) #LOOPHOLE!! Its possible to skip this step and proceed with subsequent
 tryout.add_engagement(project_B) #steps. However, it matters! Remember to link the code.
 tryout.add_engagement(project_C)
+tryout.add_engagement(project_D)
+tryout.add_engagement(project_E)
+tryout.add_engagement(project_F)
+tryout.add_engagement(project_H)
+tryout.add_engagement(project_I)
+tryout.add_engagement(project_J)
 
 
 
