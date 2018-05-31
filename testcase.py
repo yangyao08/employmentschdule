@@ -317,7 +317,7 @@ tryout.add_engagement(project_J)
 
 
 #Test Asignment
-ryout.assign_engagement(project_A)
+tryout.assign_engagement(project_A)
 tryout.assign_engagement(project_B, Rajesh)
 
 #Test removal
@@ -335,3 +335,8 @@ tryout.assign_engagement(project_G)
 tryout.assign_engagement(project_H)
 tryout.assign_engagement(project_I)
 tryout.assign_engagement(project_J)
+
+#test end engagement: Check what engagement is still in the list, whether the engagement is still personnel's list
+#what about the deadline end engagement? not tested yet. how to test
+#check for layoff personnel. requirement of involved engagement all require 1 more. name of personnel no longer in engagement
+#
