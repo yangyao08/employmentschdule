@@ -80,12 +80,11 @@ class personnel():
     #Constraint 2
     #Return a rating of how busy a person is starting from a given date
     def busyness(self,date):
-        relevant = list(filter(lambda x:x.end>=date,self.engagements))
         busy = 0
-        for each in relevant:
+        for each in self.engagements:
             busyratio = each.hours/each.deadline #assume constant throughout all days
-            weight = 1/(each.end - date).days  ###??? If the job ending soon, larger weightage? Don't make sense
-            busy += busyratio*weight
+            weight = 1/(abs((each.end - date).days)+1)  ###??? If the job ending soon, larger weightage? Don't make sense
+            busy += busyratio*weight #+ 1 above to prevent 1/0
         return busy
     
     #Constraint 3A
@@ -154,26 +153,33 @@ class engagement():
     # Need to check capacity and remind the person if he still want to continue  
     ### Check whether the priority person should/should not be added into the engagementss
     def priority(self,person): 
-        self.involved.append(person)
-        person.engagements.append(self)
-        self.requirement -= 1
+        if person in self.involved:
+          print(person.name + " has been assigned to this engagement")
+        elif self.requirement == 0:
+          print("Requirement has already been fulfilled")
+        else:
+          self.involved.append(person)
+          person.engagements.append(self)
+          self.requirement -= 1
    
     #Random assignment of personnel to the engagement, subject to constraint 1,2 and 3
     def assignment(self,selected_schedule): #TBC
         all_personnel = selected_schedule.allpersonnels  #kapok from schedule
         all_personnel = list(filter(lambda x: x not in self.involved,all_personnel))
+        if self.requirement == 0:
+          print("Requirement has already been fulfilled")
         while self.requirement != 0:
             #filter bottom 50th percentile 
             ls=[]
             all_personnel.sort(key = lambda x: x.capacity(self.start))
-            for free in all_personnel[:int(0.5*len(all_personnel))+1]: #constraint 1:Capacity
+            for free in all_personnel[:int(0.50*len(all_personnel))+1]: #constraint 1:Capacity
                 ls.append(free)
-            ls.sort(key=lambda x: x.busyness(self.start))
+            ls.sort(key=lambda x: x.busyness(self.end))
             for slack in ls: #constraint 2: Busyness
-                ls=ls[:int(0.5*len(ls))+1]
+                ls=ls[:int(0.50*len(ls))+1]
             ls.sort(key=lambda x: x.diff_scale(self.start))
             for k in ls: #constraint 3 Difficulty
-                ls=ls[:int(0.5*len(ls))+1]
+                ls=ls[:int(0.50*len(ls))+1]
             selected = random.choice(ls) #Random selection from resultant personnel
             self.requirement -= 1
             self.involved.append(selected)
@@ -221,6 +227,7 @@ class schedule():
     #Personnel left the company
     def layoff_personnel(self,person): #should i put name or person, how do i acccount for it
         person.laidoff()
+        self.allpersonnels.remove(person)
         #have to remove it from self.personnels later on through filter, or should i do it now?
     
     #Add new engagement entry into the schedule
@@ -229,6 +236,8 @@ class schedule():
     
     #Assign personnel into particular engagement
     def assign_engagement(self,selected_engagement,*wanted_personnel):
+        if selected_engagement not in self.allengagements:
+            return "Remember to add engagement"
         if wanted_personnel:
             for each in wanted_personnel:
                 selected_engagement.priority(each)
@@ -273,10 +282,15 @@ Rajesh = personnel('Rajesh','Associate')
 
 project_A = engagement('projectA',('channel 1','PPA'),60,datetime.date(2018,6,1),datetime.date(2018,7,1),1)
 project_B = engagement('projectB',('channel 2','PPA'),80,datetime.date(2018,6,5),datetime.date(2018,7,5),2)
-project_C = engagement('projectC',('channel 1','WACC'),60,datetime.date(2018,6,3),datetime.date(2018,5,25),3)
-project_D = engagement('projectD',('channel 2','Biz Val'),100,datetime.date(2018,6,3),datetime.date(2018,5,25),3)
-project_E = engagement('projectE',('channel 2','Others'),80,datetime.date(2018,6,3),datetime.date(2018,5,25),2)
-project_F = engagement('projectF',('channel 1','Impair'),60,datetime.date(2018,6,3),datetime.date(2018,5,25),1)
+project_C = engagement('projectC',('channel 1','WACC'),60,datetime.date(2018,5,3),datetime.date(2018,5,25),3)
+project_D = engagement('projectD',('channel 2','Biz Val'),100,datetime.date(2018,5,3),datetime.date(2018,5,25),3)
+project_E = engagement('projectE',('channel 2','Others'),80,datetime.date(2018,5,3),datetime.date(2018,5,25),2)
+project_F = engagement('projectF',('channel 1','Impair'),60,datetime.date(2018,5,3),datetime.date(2018,5,25),1)
+project_G = engagement('projectG',('channel 1','Impair'),60,datetime.date(2018,5,3),datetime.date(2018,5,25),1)
+project_H = engagement('projectH',('channel 2','Others'),80,datetime.date(2018,5,3),datetime.date(2018,5,25),2)
+project_I = engagement('projectI',('channel 2','Others'),80,datetime.date(2018,5,3),datetime.date(2018,5,25),2)
+project_J = engagement('projectJ',('channel 2','Others'),80,datetime.date(2018,5,3),datetime.date(2018,5,25),1)
+
 
 #should i do it this way? or create in the new_personnel function
 tryout = schedule()
@@ -290,12 +304,14 @@ tryout.new_personnel(Takagi)
 tryout.new_personnel(Hamtaro)
 tryout.new_personnel(Rajesh)
 
-tryout.add_engagement(project_A)
-tryout.add_engagement(project_B)
+tryout.add_engagement(project_A) #LOOPHOLE!! Its possible to skip this step and proceed with subsequent
+tryout.add_engagement(project_B) #steps. However, it matters! Remember to link the code.
 tryout.add_engagement(project_C)
 
+
+
 #Test Asignment
-tryout.assign_engagement(project_A)
+ryout.assign_engagement(project_A)
 tryout.assign_engagement(project_B, Rajesh)
 
 #Test removal
@@ -309,3 +325,7 @@ tryout.assign_engagement(project_C)
 tryout.assign_engagement(project_D)
 tryout.assign_engagement(project_E)
 tryout.assign_engagement(project_F)
+tryout.assign_engagement(project_G)
+tryout.assign_engagement(project_H)
+tryout.assign_engagement(project_I)
+tryout.assign_engagement(project_J)
