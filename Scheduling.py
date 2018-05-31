@@ -167,7 +167,7 @@ class engagement():
         all_personnel = list(filter(lambda x: x not in self.involved,all_personnel))
         
         if self.requirement == 0:
-          return "Requirement has already been fulfilled"
+            return "Requirement has already been fulfilled"
         while self.requirement != 0:
             #filter bottom 50th percentile 
             ls=[]
@@ -188,7 +188,7 @@ class engagement():
         
     #Engagement has been completed 
     ### Factor in force end or deadline end
-    def end(self):
+    def finish(self):
         for peeps in self.involved:
             peeps.engagements.remove(self) #remove the job
         self.complete = True
@@ -258,16 +258,29 @@ class schedule():
     
     #Forced end an engagement
     def end_engagement(self,selected_engagement):
-        selected_engagement.end()
+        selected_engagement.finish()
+        self.allengagements.remove(selected_engagement)
         #filter out those engagement that has ended
     
     #add extension of deadline
+    def time_extension(self,selected_engagement,new_date):
+        if new_date<=selected_engagement.end():
+          return "Error: A later date should be given"
+        else:
+          return selected_engagement.extend_deadline(new_date) 
         
-    def update(): #Update schedule: Personnel & Engagement and saved back for future uses
+     #Update schedule: Personnel & Engagement and saved back for future uses
         #update personnels that are fired/recruited
         #update forced end_engagement
         #Is display a seperate matter?
-        pass
+       
+    
+    #First thing that must be used    
+    def timecheck(): 
+        currentdate = datetime.date.today()
+        for each in self.allengagements:
+            if each.end < currentdate:
+                end_engagement(each)
 
 
 
