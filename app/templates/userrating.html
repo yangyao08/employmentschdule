@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block app_content %}
+      <table class="table table-hover" border = 1>
+         <thead>
+            <td>Timestamp</td>
+            <td>Faculty</td>
+            <td>Module 1</td>
+            <td>Module 1 Ratings</td>
+            <td>Module 2</td>
+            <td>Module 2 Ratings</td>
+            <td>Module 3</td>
+            <td>Module 3 Ratings</td>
+            <td>Module 4</td>
+            <td>Module 4 Ratings</td>
+            <td>Module 5</td>
+            <td>Module 5 Ratings</td>
+         </thead>
+
+         {% for row in rows %}
+            <tr>
+               <td>{{row["Timestamp"]}}</td>
+               <td>{{row["Which faculty are you from?"]}}</td>
+               <td>{{row["Module 1 (e.g GES1000) "]}}</td>
+               <td>{{row['Ratings (module 1) ']}}</td>
+               <td>{{row["Module 2 "]}}</td>
+               <td>{{row["Ratings (module 2) "]}}</td>
+               <td>{{row["Module 3"]}}</td>
+               <td>{{row['Ratings (module 3) ']}}</td>
+               <td>{{row["Module 4"]}}</td>
+               <td>{{row["Ratings (module 4) "]}}</td>
+               <td>{{row["Module 5"]}}</td>
+               <td>{{row["Ratings (module 5) "]}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+
+      <a href = "/">Go back to home page</a>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Search for Engagements</h1>
+    <div class="form-group">
+      <form action="" method="post" class="col-6">
+          {{ form.hidden_tag() }}
+          <p>
+              {{ form.Engagement.label }}<br>
+              {{ form.Engagement(size=32, class_="form-control") }}
+          </p>
+          <p>{{ form.submit(class="btn btn-primary") }}</p>
+      </form>
+    </div>
+
+    {% if Engagement %}
+      <div>
+        <h2>Result</h2>
+        <p>
+          {% for eng in Engagement %}
+            {{eng}}
+          {% endfor %}
+        </p>
+      </div>
+    {% endif %}
+{% endblock %}

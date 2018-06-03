@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+	<h1>Hi, {{ current_user.username }}!</h1>
+	<h2>Employee Projects Assignment</h2>
+	<a href="/viewpersonnel" title="View Personnel">View all Personnel</a> <br>
+	<a href="/viewengagements" title="View Engagements">View all Engagements</a> <br>
+	<a href="/searchpersonnel" title="Search Personnel">Search Personnel</a> <br>
+	<a href="/searchengagement" title="Search Engagements">Search Engagements</a> <br>
+	<a href="/addnewpersonnel" title="Add a new personnel">Add New Personnel</a> <br>
+	<a href="/addnewengagement" title="Add a new engagement">Add new Engagement</a> <br>
+	<a href="/deletepersonnel" title="Delete a personnel">Delete a personnel</a> <br>
+	<a href="/deleteengagement" title="Delete an engagement">Delete an engagement</a> <br>
+{% endblock %}

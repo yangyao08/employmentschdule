@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h3>Delete a personnel</h3>
+    <form action="" method="post"> 
+        {{form.hidden_tag()}}   
+        <p>
+            {{ form.person.label }}<br> 
+            {{ form.person(size=32) }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}
+

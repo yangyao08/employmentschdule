@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+      <h3>Personnel Information</h3>
+      <form action="" method="post">
+      {{form.hidden_tag()}}   
+        <p>
+            {{ form.Name.label }}<br>
+            {{ form.Name(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Position.label }}<br>
+            {{ form.Position(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Tier.label }}<br>
+            {{ form.Tier(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Engagements.label }}<br>
+            {{ form.Engagements(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Easy_Jobs.label }}<br>
+            {{ form.Easy_Jobs(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Medium_Jobs.label }}<br>
+            {{ form.Medium_Jobs(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.Difficult_Jobs.label }}<br>
+            {{ form.Difficult_Jobs(size=32) }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
+     </form>
+{% endblock %}

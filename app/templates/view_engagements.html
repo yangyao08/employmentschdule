@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block app_content %}
+      <table class="table table-hover" border = 1>
+         <thead>
+            <td>Name</td>
+            <td>Job</td>
+            <td>Difficulty</td>
+            <td>Expected Hours</td>
+            <td>Start Date</td>
+            <td>End Date</td>
+            <td>Days Given</td>
+            <td>Required Number of Person</td>
+            <td>Personnels Involved</td>
+            <td>Priority Person</td>
+            <td>Completed</td>
+         </thead>
+
+         {% for row in rows %}
+            <tr>
+               <td>{{row["Name"]}}</td>
+               <td>{{row["Job"]}}</td>
+               <td> {{ row["Difficulty"]}}</td>
+               <td>{{row['Expected Hours']}}</td>
+               <td>{{row["Start Date"]}}</td>
+               <td>{{row["End Date"]}}</td>
+               <td> {{ row["Days Given"]}}</td>
+               <td>{{row['Required Number of Person']}}</td>
+               <td>{{row["Personnels Involved"]}}</td>
+               <td> {{ row["Priority Person"]}}</td>
+               <td>{{row['Completed']}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+
+      <a href = "/">Go back to home page</a>
+{% endblock %}

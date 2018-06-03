@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block app_content %}
+      <table class="table table-hover" border = 1>
+         <thead>
+            <td>S/No</td>
+            <td>Module Code>/td<
+            <td>Module Title</td>
+            <td>MC</td>
+	    <td>Lecture Time Table</td>
+            <td>Exam Time Table</td>
+	    <td>Pre-requisite</td>
+	    <td>Preclusion</td>
+	    <td>Department</td>
+  	    <td>Description</td>
+         </thead>
+
+         {% for row in rows %}
+            <tr>
+               <td>{{row["S/No"]}}</td>
+               <td>{{row["Module Code"]}}</td>
+               <td> {{ row["Module Title"]}}</td>
+               <td>{{row['MC']}}</td>
+               <td>{{row["Lecture Time Table"]}}</td>
+               <td>{{row["Exam Time Table"]}}</td>
+               <td> {{ row["Pre-requisite"]}}</td>
+               <td>{{row['Preclusion']}}</td>
+               <td>{{row["Department"]}}</td>
+               <td>{{row["Description"]}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+
+      <a href = "/">Go back to home page</a>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h3>Delete an engagement</h3>
+    <form action="" method="post"> 
+        {{form.hidden_tag()}}   
+        <p>
+            {{ form.engagement.label }}<br> 
+            {{ form.engagement(size=32) }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

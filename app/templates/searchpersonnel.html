@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Search for Personnel</h1>
+    <div class="form-group">
+      <form action="" method="post" class="col-6">
+          {{ form.hidden_tag() }}
+          <p>
+              {{ form.Personnel.label }}<br>
+              {{ form.Personnel(size=32, class_="form-control") }}
+          </p>
+          <p>{{ form.submit(class="btn btn-primary") }}</p>
+      </form>
+    </div>
+
+    {% if Personnel %}
+      <div>
+        <h2>Result</h2>
+        <p>
+          {% for person in Personnel %}
+            {{person}}
+          {% endfor %}
+        </p>
+      </div>
+    {% endif %}
+{% endblock %}
