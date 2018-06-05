@@ -117,10 +117,10 @@ class Engagement(Base):
     hours = Column(Float)
     startdate = Column(DateTime)
     enddate = Column(DateTime)
-    deadline = Column(Integer)
+    deadline = Column(Integer) #not calculated yet
     requirement = Column(Integer)
     #personnels = Column(ScalarListType(), nullable=True)
-    completed = Column(Boolean, default = False)
+    completed = Column(Boolean, default = False) ##self.completed
     
     def __init__(self,name,jobtype,hours,startdate,enddate,requirement):
         self.name = name
@@ -131,10 +131,97 @@ class Engagement(Base):
         self.requirement = requirement
         ##MISSING
         ##self.difficulty
-        ##self.personnels
-        ##self.completed
-
+        #self.deadline
     
+    def priority(self,person): #wnsure that it is peeps
+        if person in self.personnels:
+          print(person.name + " has been assigned to this engagement")
+        elif self.requirement == 0:
+          print("Requirement has already been fulfilled")
+        else:
+          self.personnels.append(person)
+          self.requirement -= 1
+          s.commit()
+    
+    def assignment(self): #TBC
+        if self.requirement == 0:
+            print("Requirement has already been fulfilled")
+        while self.requirement != 0:
+            all_personnel = s.query(Personnel).filter(Personnel not in self.personnels)
+            #filter bottom 50th percentile 
+            ls=[]
+            all_personnel.sort(key = lambda x: x.capacity(self.start))
+            for free in all_personnel[:int(0.50*len(all_personnel))+1]: #constraint 1:Capacity
+                ls.append(free)
+            ls.sort(key=lambda x: x.busyness(self.end))
+            for slack in ls: #constraint 2: Busyness
+                ls=ls[:int(0.50*len(ls))+1]
+            ls.sort(key=lambda x: x.diff_scale(self.start))
+            for k in ls: #constraint 3 Difficulty
+                ls=ls[:int(0.50*len(ls))+1]
+            selected = random.choice(ls) #Random selection from resultant personnel
+            self.requirement -= 1
+            self.personnels.append(selected)
+            s.commit()
+       """ 
+    #Engagement has been completed 
+    ### Factor in force end or deadline end
+    def finish(self):
+        for peeps in self.involved:
+            peeps.engagements.remove(self) #remove the job
+        self.complete = True #should i del it instead? del self
+        """ 
+        #remove externally
+        
+        def extend_deadline(self,new_end_date):
+            self.deadline += (new_end_date - self.end).days
+            self.enddate = new_end_date
+            s.commit()
+################################################################################################################
+#Functions
+            
+def add_personnel(name,position):
+    person = Personnel(name,position)
+    s.add(person)
+    s.commit()
+
+def leave_personnel(name):
+    selected = s.query(Personnel).filter(Personnel.name == name).first()
+    s.delete(selected) #need to commit?
+
+def add_engagement(name,jobtype,hours,startdate,enddate,requirement):
+    engage = Engagement(name,jobtype,hours,startdate,enddate,requirement)
+    s.add(engage)
+    s.commit()
+
+def assign(engagename,*personname):
+    eselected =  s.query(Engagement).filter(Engagement.name == engagename).first()
+    if personname:
+        pselected = s.query(Personnel).filter(Personnel.name == personname).first()
+        eselected.priority(pselected)
+    eselected.assignment()
+
+def pullout_personnel(engagename,personname):
+    eselected =  s.query(Engagement).filter(Engagement.name == engagename).first()
+    pselected = s.query(Personnel).filter(Personnel.name == personname).first()
+    if pselected.engagements not in eselected.personnels:
+        return "Error: Personnel not found in engagement" #can be better phrased
+    else:
+        eselected.personnels.remove(pselected)
+        eselected.requirement += 1
+        s.commit()
+        
+def end_engagement(engagename):
+    eselected = s.query(Engagement).filter(Engagement.name == engagename).first()
+    s.delete(eselected) #need to commit? relation broken? need to check
+
+def time_extension(engagename, new_date):
+    eselected = s.query(Engagement).filter(Engagement.name == engagename).first()
+    eselected.extend_deadline(new_date)
+    
+        
+        
+        
 
 Base.metadata.create_all(engine)
         
