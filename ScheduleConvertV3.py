@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Jun 03 16:06:59 2018
-
 @author: yangyao
 """
 
@@ -103,7 +101,7 @@ def timecheck():
                     eachpeeps.diff_2 -= 1
                 else:
                     eachpeeps.diff_3 -= 1
-        s.delete(each)
+            s.delete(each)
         s.commit()
     all_personnel = s.query(Personnel).all()
     for each in all_personnel:
@@ -298,21 +296,16 @@ add_personnel('Adam','Associate')
 add_personnel('Brock','Senior Associate')
 add_personnel('Candy','Associate')
 add_personnel('Jamie','Associate')
-
 add_engagement('ProjectA','C1:PPA',60,datetime.date(2018,6,1),datetime.date(2018,6,30),2)
 add_engagement('ProjectB','C2:PPA',60,datetime.date(2018,6,1),datetime.date(2018,6,30),2)
-
 #Part2: Check that people can leave (w/o jobs on hand)
 #leave_personnel('Jamie')
-
-
 #Part3: Check assignment works.
 #Rmb to check if over assigment will not work
-#assign('ProjectA','Adam','Brock')
-
+assign('ProjectA','Adam','Brock')
 assign('ProjectB')
-assign('ProjectA') 
-"""
+#assign('ProjectA') 
+
 
 
 #Part4: Check fired
@@ -326,19 +319,25 @@ assign('ProjectA')
 #Part5: Time extension
 #time_extension('ProjectA',datetime.datetime(2018,7,25))
 
-"""
+
 #6A: Set time before today
 A = s.query(Engagement).filter(Engagement.name == "ProjectA").first()
 B = s.query(Engagement).filter(Engagement.name == "ProjectB").first()
 A.enddate = datetime.datetime(2018,6,3)
 B.enddate = datetime.datetime(2018,6,10)
 s.commit()
+
 """
+
+#B = s.query(Engagement).filter(Engagement.name == "ProjectB").first()
+#B.enddate = datetime.datetime(2018,6,9)
+#s.commit()
+
 
 
 
 #Part6B: Check timecheck
-timecheck()
+#timecheck()
 
 
 
@@ -352,10 +351,4 @@ timecheck()
 # To retrieve it back, 
 # for smth in <Engagement>.personnels:
 # for smth i <Personnel>.engagements
-# Find out how store list of names in a column
-# Find out 
-
-
-    
-    
 
