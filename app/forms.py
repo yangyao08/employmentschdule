@@ -61,11 +61,11 @@ class RequiredIf(InputRequired):
 class AddPersonForm(FlaskForm):
     Name = StringField('Enter the name', validators=[DataRequired()])
     Position = StringField('Enter his/her position', validators=[DataRequired()])
-    Tier = StringField('Enter his job tier', validators=[DataRequired()])
-    Engagements = StringField('Enter his current engagements')
-    Easy_Jobs = IntegerField('Enter the current number of easy jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
-    Medium_Jobs = IntegerField('Enter the current number of medium jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
-    Difficult_Jobs = IntegerField('Enter the current number of difficult jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
+    #Tier = StringField('Enter his job tier', validators=[DataRequired()])
+    #Engagements = StringField('Enter his current engagements')
+    #Easy_Jobs = IntegerField('Enter the current number of easy jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
+    #Medium_Jobs = IntegerField('Enter the current number of medium jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
+    #Difficult_Jobs = IntegerField('Enter the current number of difficult jobs the personnel has',validators=[InputRequired(),NumberRange(min=0, max=100),optional()])
     #Employed = 1
     submit = SubmitField('Add')
 
@@ -99,3 +99,7 @@ class SearchPersonnelForm(FlaskForm):
 class SearchEngagementForm(FlaskForm):
     Engagement = StringField('Enter Job Name', validators=[DataRequired()])
     submit = SubmitField('Search')
+
+class AssignEngagementForm(FlaskForm):
+    Engagement = StringField("Enter engagement to be assigned.",validators=[DataRequired()])
+    submit = SubmitField("Assign")

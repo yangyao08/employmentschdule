@@ -1,5 +1,5 @@
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddPersonForm, AddEngagementForm,RemovePersonForm, RemoveEngagementForm, SearchPersonnelForm, SearchEngagementForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddPersonForm, AddEngagementForm,RemovePersonForm, RemoveEngagementForm, SearchPersonnelForm, SearchEngagementForm, AssignEngagementForm
 from app.models import User
 import sqlite3
 from flask_login import current_user, login_user, logout_user, login_required
@@ -159,11 +159,11 @@ def addnewpersonnel():
   if form.validate_on_submit():
     Name = form.Name.data
     Position = form.Position.data
-    Tier = form.Tier.data
-    Engagements = form.Engagements.data
-    Easy_Jobs = form.Easy_Jobs.data
-    Medium_Jobs = form.Medium_Jobs.data
-    Difficult_Jobs = form.Difficult_Jobs.data
+    #Tier = form.Tier.data
+    Engagements = None
+    Easy_Jobs = 0
+    Medium_Jobs = 0
+    Difficult_Jobs = 0
 
 
     con = sqlite3.connect("testemployees.db")
@@ -180,7 +180,7 @@ def addnewpersonnel():
           `Difficult Jobs`,
           `Employed` ) 
       VALUES (?,?,?,?,?,?,?,?)""", 
-      (Name,Position,Tier,Engagements,Easy_Jobs,Medium_Jobs,Difficult_Jobs,1))
+      (Name,Position,None,Engagements,Easy_Jobs,Medium_Jobs,Difficult_Jobs,1))
     con.commit()
     con.close()
     return render_template('addedpersonnel.html')
@@ -250,3 +250,23 @@ def deleteengagement():
     return render_template('deletedeng.html')
   return render_template('deleteengagement.html',form=form)
 
+@app.route('/assign_engagement', methods=['GET', 'POST'])
+def assign_engagement():
+  form = AssignEngagementForm()
+  if form.validate_on_submit():
+    con = sqlite3.connect("testemployees.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute('SELECT `Required Num of Person` FROM Engagements Where Name = ?', (form.Engagement.data,))
+    #get required number of personnel
+    req = cur.fetchone()[0]
+
+    #loop while required number not 0
+
+
+
+    #run assignment algorithm
+    con.commit()
+    con.close()
+    return render_template('assigned.html')
+  return render_template('assign.html',form=form)

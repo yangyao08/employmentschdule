@@ -12,7 +12,7 @@ import random
 
 
 
-engine = create_engine('sqlite:///C:\\Users\\yangyao\\Desktop\\Scheduling Project\\ScheduleV1.db', echo=False)
+engine = create_engine('sqlite:////home/angps/Documents/Yangyao/webapp/employmentschdule/testemployees.db', echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 s = Session() #Connection to the system
