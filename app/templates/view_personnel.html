@@ -2,26 +2,24 @@
 {% block app_content %}
       <table class="table table-hover" border = 1>
          <thead>
+            <td>id/td>
             <td>Name</td>
             <td>Position</td>
-            <td>Tier</td>
-            <td>Engagements</td>
             <td>Easy_Jobs</td>
             <td>Medium_Jobs</td>
             <td>Difficult_Jobs</td>
-            <td>Employed</td>
+            <td>Engagement Lists</td>
          </thead>
 
          {% for row in rows %}
             <tr>
-               <td>{{row["Name"]}}</td>
-               <td>{{row["Position"]}}</td>
-               <td> {{ row["Tier"]}}</td>
-               <td>{{row['Engagements']}}</td>
-               <td>{{row["Easy_Jobs"]}}</td>
-               <td>{{row["Medium_Jobs"]}}</td>
-               <td> {{ row["Difficult_Jobs"]}}</td>
-               <td>{{row['Employed']}}</td>
+               <td>{{row["id"]}}</td>
+               <td>{{row["name"]}}</td>
+               <td> {{ row["position"]}}</td>
+               <td>{{row['diff_1']}}</td>
+               <td>{{row["diff_2"]}}</td>
+               <td>{{row["diff_3"]}}</td>
+               <td> {{ row["engagement_lists"]}}</td>
             </tr>
          {% endfor %}
       </table>

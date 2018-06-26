@@ -73,15 +73,10 @@ class AddPersonForm(FlaskForm):
 class AddEngagementForm(FlaskForm):
     Name = StringField('Enter the job name', validators=[DataRequired()])
     Job = StringField('Enter the job type', validators=[DataRequired()])
-    Difficulty = IntegerField('Enter the difficulty of job',validators=[InputRequired(),NumberRange(min=1, max=3),optional()],render_kw={"placeholder": "1-Easy,2-Medium,3-Hard"})
-    Expected_Hours = IntegerField('Enter the expected hours',validators=[InputRequired(),NumberRange(min=0, max=1000),optional()])
+    Hours = IntegerField('Enter the expected hours',validators=[InputRequired(),NumberRange(min=0, max=1000),optional()])
     Start_Date = DateField('Enter the start date',format='%Y-%m-%d')
     End_Date = DateField('Enter the deadline of this project',format='%Y-%m-%d')
-    Days_Given = IntegerField('Enter the number of days given',validators=[InputRequired(),NumberRange(min=0, max=1000),optional()])
-    Req_person = IntegerField('Enter the number of personnel required',validators=[InputRequired(),NumberRange(min=1, max=100),optional()])
-    #Personnel_Involved= IntegerField('Enter Module 1 ratings', validators=[DataRequired()])
-    Priority_Person = StringField('Enter any priority person')
-    #Completed = IntegerField('Enter the current number of easy jobs the personnel has')
+    Requirement = IntegerField('Enter the number of personnel required',validators=[InputRequired(),NumberRange(min=1, max=100),optional()])
     submit = SubmitField('Add')
 
 class RemovePersonForm(FlaskForm):

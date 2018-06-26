@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 import datetime
 import random
 
-engine = create_engine('sqlite:///C:\\Users\\yangyao\\Desktop\\Scheduling Project\\ScheduleV1.db', echo=False)
+engine = create_engine('sqlite:///Schedule.db', echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 s = Session() #Connection to the system
@@ -24,7 +24,7 @@ engagediff = {'C1':{'PPA':1,'WACC':1,'Biz Val':1,'Impair':1},'C2':{'PPA':2,\
 ###################################################################################################################
 #Functions
             
-def add_personnel(name,position):
+def add_personnel(name,position):  #done
     person = Personnel(name,position)
     s.add(person)
     s.commit()

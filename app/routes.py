@@ -7,7 +7,163 @@ from flask import render_template, flash, redirect, url_for, request, session
 from werkzeug.urls import url_parse
 from datetime import datetime
 from functools import wraps
+from sqlalchemy import create_engine
+from sqlalchemy import Column, Table, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
+connection = Table('connect',Base.metadata,\
+                   Column('person_id', Integer, ForeignKey('people.id')),\
+                   Column('engage_id', Integer, ForeignKey('jobs.id')))
+
+class Personnel(Base):
+    __tablename__ = 'people'
+    
+    id = Column(Integer,primary_key = True)
+    name = Column(String(50),unique = True)
+    position = Column(String(50))
+    diff_1= Column(Integer, default=0)
+    diff_2  = Column(Integer, default=0)
+    diff_3 = Column(Integer, default=0)
+    engagement_lists = Column(String(255), nullable = True)
+    
+    
+    def __init__(self,name,position):
+        self.name = name
+        self.position = position
+        self.engagements = []
+        
+    #Constraint 1
+    #Return a rating on how occupied a person is starting from a given date
+    def capacity(self,date):
+        relevant = []
+        for job in self.engagements:
+            if job.enddate>= date:
+                relevant.append(job) 
+        return sum(list(map(lambda x:x.hours,relevant)))
+    
+    #Constraint 2
+    #Return a rating of how busy a person is starting from a given date
+    def busyness(self,date):
+        busy = 0
+        for each in self.engagements:
+            busyratio = each.hours/each.deadline #assume constant throughout all days
+            weight = 1/(abs((each.enddate - date).days)+1) #+1 to prevent error
+            busy += busyratio*weight 
+        return busy
+    
+    #Constraint 3A
+    #Return a rating of the overall estimated difficulty of the jobs on-hand starting from a given date
+    def diff_scale(self,date):
+        count=0
+        for k,v in self.breakdown(date).items():
+            count+=k*v
+        return count
+    
+    #Constraint 3B
+    def breakdown(self,date):
+        distribution = {1:0,2:0,3:0} 
+        relevant = []
+        for job in self.engagements:
+            if job.enddate>= date:
+                relevant.append(job) 
+        for each in relevant:
+            distribution[each.difficulty] += 1 
+        return distribution
+
+engagediff = {'C1':{'PPA':1,'WACC':1,'Biz Val':1,'Impair':1},'C2':{'PPA':2,\
+              'Biz Val':2, 'BM Work':3, 'Others':3}}
+class Engagement(Base):
+    #run once is sufficient
+    __tablename__ = 'jobs'
+
+
+    id = Column(Integer,primary_key = True)
+    name = Column(String(100),unique = True)
+    jobtype = Column(String(100))
+    difficulty = Column(Integer)
+    hours = Column(Float)
+    startdate = Column(DateTime)
+    enddate = Column(DateTime)
+    deadline = Column(Integer) #not calculated yet
+    requirement = Column(Integer)
+    personnel_list = Column(String(255), nullable = True)
+    
+    def __init__(self,name,jobtype,hours,startdate,enddate,requirement):
+        jobtier = jobtype.split(':')
+        self.name = name
+        self.jobtype = jobtype
+        self.difficulty = engagediff[jobtier[0]][jobtier[1]]
+        self.hours = hours
+        self.startdate = startdate
+        self.enddate = enddate
+        self.deadline = (enddate-startdate).days + 1
+        self.requirement = requirement
+        self.personnels = []
+    def priority(self,person): #wnsure that it is peeps
+        if person in self.personnels:
+          return person.name + " has been assigned to this engagement"
+        elif self.requirement == 0:
+          print("Requirement has already been fulfilled")
+        else:
+          self.personnels.append(person)
+          self.requirement -= 1
+          if self.difficulty == 1:
+              person.diff_1 += 1
+          elif self.difficulty == 2:
+              person.diff_2 += 1
+          else:
+              person.diff_3 += 1
+          prefresh(person)
+          erefresh(self)
+          s.commit()
+    
+    def assignment(self): #alot of work to be done here. cant do the sort
+        while self.requirement != 0:
+            all_personnel = s.query(Personnel).all()
+            ls = []
+            for each in all_personnel:
+                if each.name not in [x.name for x in self.personnels]:
+                    ls.append(each)
+            #filter bottom 50th percentile 
+            
+            #constraint 1:Capacity
+            ls.sort(key = lambda x: x.capacity(self.startdate))
+            ls = ls[:int(0.50*len(all_personnel))+1]
+            
+            #constraint 2: Busyness
+            ls.sort(key=lambda x: x.busyness(self.enddate))
+            ls=ls[:int(0.50*len(ls))+1] 
+            
+            #constraint 3 Difficulty
+            ls.sort(key=lambda x: x.diff_scale(self.startdate))
+            ls=ls[:int(0.50*len(ls))+1]
+            
+            selected = random.choice(ls) #Random selection from resultant personnel
+            self.requirement -= 1
+            self.personnels.append(selected)
+            
+            if self.difficulty == 1:
+                selected.diff_1 += 1
+            elif self.difficulty == 2:
+                selected.diff_2 += 1
+            else:
+                selected.diff_3 += 1
+            prefresh(selected)
+        erefresh(self)
+        print("Requirement has already been fulfilled")
+        s.commit()
+            
+        
+    #remove externally
+    def extend_deadline(self,new_end_date):
+        if new_end_date> self.enddate:
+            self.deadline += (new_end_date - self.enddate).days
+            self.enddate = new_end_date
+        else:
+            print("Please check your new end date.")
+        s.commit()        
 def requires_access_level(access_level):
   def decorator(f):
       @wraps(f)
@@ -23,6 +179,16 @@ def requires_access_level(access_level):
       return decorated_function
   return decorator
 
+def prefresh(peeps):
+  job = str([each.name for each in peeps.engagements])
+  peeps.engagement_lists = job
+  s.commit()
+
+def erefresh(job):
+  peeps = str([each.name for each in job.personnels])
+  job.personnel_list = peeps
+  s.commit()
+################################################################################################################  
 
 @app.route('/')
 @app.route('/index')
@@ -97,25 +263,24 @@ def edit_profile():
 
 @app.route('/viewpersonnel')
 def viewpersonnel():
- con = sqlite3.connect("testemployees.db")
- con.row_factory = sqlite3.Row
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
+  rows = s.execute('Select * from people')
+  return render_template("view_personnel.html",rows = rows)
 
- cur = con.cursor()
- cur.execute("select * from Employees")
-
- rows = cur.fetchall();
- return render_template("view_personnel.html",rows = rows)
 
 @app.route('/viewengagements')
 def viewengagements():
- con = sqlite3.connect("testemployees.db")
- con.row_factory = sqlite3.Row
-
- cur = con.cursor()
- cur.execute("select * from Engagements")
-
- rows = cur.fetchall();
- return render_template("view_engagements.html",rows = rows)
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
+  rows = s.execute('Select * from jobs')
+  return render_template("view_engagements.html",rows = rows)
 
 
 
@@ -123,14 +288,12 @@ def viewengagements():
 def searchpersonnel():
   form = SearchPersonnelForm()
   if form.validate_on_submit():
-    con = sqlite3.connect("testemployees.db")
-    con.row_factory = sqlite3.Row
-
-    cur = con.cursor()
-    cur.execute("SELECT * FROM Employees WHERE `Name` = ?",(form.Personnel.data,))
-
-    rows = cur.fetchall();
-
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind=engine)
+    s = Session() #Connection to the system
+    Base.metadata.create_all(engine)
+    rows = s.query(Personnel).filter(Personnel.name == form.Personnel.data).all()
 
     return render_template("view_personnel.html",rows = rows)
   return render_template('searchpersonnel.html', title='Search for Personnel', form=form)
@@ -139,134 +302,107 @@ def searchpersonnel():
 def searchengagement():
   form = SearchEngagementForm()
   if form.validate_on_submit():
-    con = sqlite3.connect("testemployees.db")
-    con.row_factory = sqlite3.Row
-
-    cur = con.cursor()
-    cur.execute("SELECT * FROM Engagements WHERE `Name` = ?",(form.Engagement.data,))
-
-    rows = cur.fetchall();
-
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind=engine)
+    s = Session() #Connection to the system
+    Base.metadata.create_all(engine)
+    rows = s.query(Engagement).filter(Engagement.name == form.Engagement.data).all()
 
     return render_template("view_engagements.html",rows = rows)
   return render_template('searchengagement.html', title='Search for Engagement', form=form)
  
 
-
 @app.route('/addnewpersonnel', methods=['GET', 'POST'])
 def addnewpersonnel():
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
   form = AddPersonForm()
   if form.validate_on_submit():
-    Name = form.Name.data
-    Position = form.Position.data
-    #Tier = form.Tier.data
-    Engagements = None
-    Easy_Jobs = 0
-    Medium_Jobs = 0
-    Difficult_Jobs = 0
+    name = form.Name.data
+    position = form.Position.data
 
-
-    con = sqlite3.connect("testemployees.db")
-    cur = con.cursor()
-    cur.execute(
-      """INSERT INTO 
-        `Employees` (
-          `Name`, 
-          `Position`, 
-          `Tier` ,
-          `Engagements` ,
-          `Easy Jobs` ,
-          `Medium Jobs` ,
-          `Difficult Jobs`,
-          `Employed` ) 
-      VALUES (?,?,?,?,?,?,?,?)""", 
-      (Name,Position,None,Engagements,Easy_Jobs,Medium_Jobs,Difficult_Jobs,1))
-    con.commit()
-    con.close()
+    person = Personnel(name,position)
+    s.add(person)
+    s.commit()
     return render_template('addedpersonnel.html')
   return render_template('addnewpersonnel.html', form=form)
 
 
+
 @app.route('/addnewengagement', methods=['GET', 'POST'])
 def addnewengagement():
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
   form = AddEngagementForm()
   if form.validate_on_submit():
-    Name = form.Name.data
-    Job = form.Job.data
-    Difficulty = form.Difficulty.data
-    Expected_Hours = form.Expected_Hours.data
-    Start_Date = form.Start_Date.data
-    End_Date = form.End_Date.data
-    Days_Given = form.Days_Given.data
-    Req_person = form.Req_person.data
-    Priority_Person = form.Priority_Person.data
-
-    con = sqlite3.connect("testemployees.db")
-    cur = con.cursor()
-    cur.execute(
-      """INSERT INTO 
-        `Engagements` (
-          `Name`, 
-          `Job`, 
-          `Difficulty` ,
-          `Expected Hours` ,
-          `Start Date` ,
-          `End Date` ,
-          `Days Given`,
-          `Required Num of Person`,
-          `Personnel Involved` ,
-          `Priority Person`,
-          `Completed`) 
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)""", 
-      (Name,Job,Difficulty,Expected_Hours,Start_Date,End_Date,Days_Given,Req_person,0,Priority_Person,0))
-    con.commit()
-    con.close()
+    name = form.Name.data
+    jobtype = form.Job.data
+    hours = form.Hours.data
+    startdate = form.Start_Date.data
+    enddate = form.End_Date.data
+    requirement = form.Requirement.data
+    engage = Engagement(name,jobtype,hours,startdate,enddate,requirement)
+    s.add(engage)
+    s.commit()
     return render_template('addedengagement.html')
   return render_template('addnewengagement.html', form=form)
 
 @app.route('/deletepersonnel', methods=['GET', 'POST'])
 def deletepersonnel():
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
   form = RemovePersonForm()
   if form.validate_on_submit():
-    con = sqlite3.connect("testemployees.db")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute('DELETE FROM Employees where `Name`  = ?', (form.person.data,))
-    con.commit()
-    con.close()
+    try:
+      pselected = s.query(Personnel).filter(Personnel.name == form.person.data).first()
+      for each in pselected.engagements:
+          each.requirement += 1
+          each.personnels.remove(pselected)
+          erefresh(each)
+      s.delete(pselected)
+      s.commit()
+    except:
+      s.delete(pselected)
+      s.commit()
     return render_template('deletedpers.html')
   return render_template('deletepersonnel.html',form=form)
 
 @app.route('/deleteengagement', methods=['GET', 'POST'])
 def deleteengagement():
+  engine = create_engine('sqlite:///Schedule.db', echo=False)
+  Base = declarative_base()
+  Session = sessionmaker(bind=engine)
+  s = Session() #Connection to the system
+  Base.metadata.create_all(engine)
   form = RemoveEngagementForm()
   if form.validate_on_submit():
-    con = sqlite3.connect("testemployees.db")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute('DELETE FROM Engagements where `Name`  = ?', (form.engagement.data,))
-    con.commit()
-    con.close()
+    eselected = s.query(Engagement).filter(Engagement.name == form.engagement.data).first()
+    try:
+      for eachpeeps in eselected.personnels:
+          if eselected.difficulty == 1:
+              eachpeeps.diff_1 -= 1
+          elif eselected.difficulty == 2:
+              eachpeeps.diff_2 -= 1
+          else:
+              eachpeeps.diff_3 -= 1
+          eselected.personnels.remove(eachpeeps)
+          prefresh(eachpeeps)
+      s.delete(eselected) 
+      s.commit()
+    except:
+      s.delete(eselected) 
+      s.commit()
     return render_template('deletedeng.html')
   return render_template('deleteengagement.html',form=form)
 
-@app.route('/assign_engagement', methods=['GET', 'POST'])
-def assign_engagement():
-  form = AssignEngagementForm()
-  if form.validate_on_submit():
-    con = sqlite3.connect("testemployees.db")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute('SELECT `Required Num of Person` FROM Engagements Where Name = ?', (form.Engagement.data,))
-    #get required number of personnel
-    req = cur.fetchone()[0]
-
-    #loop while required number not 0
-
-
-
-    #run assignment algorithm
-    con.commit()
-    con.close()
-    return render_template('assigned.html')
-  return render_template('assign.html',form=form)
+#@app.route('/assign_engagement', methods=['GET', 'POST'])

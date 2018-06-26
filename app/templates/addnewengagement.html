@@ -2,7 +2,7 @@
 
 
 {% block app_content %}
-      <h3>Personnel Information</h3>
+      <h3>Engagement Information</h3>
       <form action="" method="post">
       {{form.hidden_tag()}}   
         <p>
@@ -14,12 +14,8 @@
             {{ form.Job(size=32) }}<br>
         </p>
         <p>
-            {{ form.Difficulty.label }}<br>
-            {{ form.Difficulty(size=32) }}<br>
-        </p>
-        <p>
-            {{ form.Expected_Hours.label }}<br>
-            {{ form.Expected_Hours(size=32) }}<br>
+            {{ form.Hours.label }}<br>
+            {{ form.Hours(size=32) }}<br>
         </p>
         <p>
             {{ form.Start_Date.label }}<br>
@@ -29,17 +25,9 @@
             {{ form.End_Date.label }}<br>
             {{ form.End_Date(size=32) }}<br>
         </p>
-        <p>
-            {{ form.Days_Given.label }}<br>
-            {{ form.Days_Given(size=32) }}<br>
-        </p>
          <p>
-            {{ form.Req_person.label }}<br>
-            {{ form.Req_person(size=32) }}<br>
-        </p>
-        <p>
-            {{ form.Priority_Person.label }}<br>
-            {{ form.Priority_Person(size=32) }}<br>
+            {{ form.Requirement.label }}<br>
+            {{ form.Requirement(size=32) }}<br>
         </p>
         <p>{{ form.submit() }}</p>
      </form>
