@@ -96,5 +96,17 @@ class SearchEngagementForm(FlaskForm):
     submit = SubmitField('Search')
 
 class AssignEngagementForm(FlaskForm):
-    Engagement = StringField("Enter engagement to be assigned.",validators=[DataRequired()])
+    Engagement = StringField("Enter engagement to be assigned",validators=[DataRequired()])
+    Person1 = StringField("Enter prioritised personnel (if any)",validators =[optional()])
+    Person2 = StringField("Enter prioritised personnel (if any)",validators = [optional()])
     submit = SubmitField("Assign")
+    
+class ExtendEngagementForm(FlaskForm):
+    Engagement = StringField("Enter engagement to be extended",validators = [DataRequired()])
+    NewDate = DateField("Enter new date",validators = [DataRequired()])
+    submit = SubmitField('Submit')
+
+class PulloutPersonnelForm(FlaskForm):
+    Engagement = StringField("Enter engagement name",validators = [DataRequired()])
+    Personnel = StringField("Enter personnel to be pulled out",validators = [DataRequired()])
+    submit = SubmitField("Submit")

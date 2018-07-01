@@ -1,5 +1,5 @@
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddPersonForm, AddEngagementForm,RemovePersonForm, RemoveEngagementForm, SearchPersonnelForm, SearchEngagementForm, AssignEngagementForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddPersonForm, AddEngagementForm,RemovePersonForm, RemoveEngagementForm, SearchPersonnelForm, SearchEngagementForm, AssignEngagementForm, ExtendEngagementForm,PulloutPersonnelForm
 from app.models import User
 import sqlite3
 from flask_login import current_user, login_user, logout_user, login_required
@@ -8,10 +8,20 @@ from werkzeug.urls import url_parse
 from datetime import datetime
 from functools import wraps
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Table, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Table, Integer, String, Float, DateTime, ForeignKey, Date
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
+import random
 Base = declarative_base()
+
+
+
+#################################################################################################################
+#################################################################################################################
+
+############
+# BACKEND  #
+############
 
 connection = Table('connect',Base.metadata,\
                    Column('person_id', Integer, ForeignKey('people.id')),\
@@ -23,6 +33,7 @@ class Personnel(Base):
     id = Column(Integer,primary_key = True)
     name = Column(String(50),unique = True)
     position = Column(String(50))
+    engagements = relationship('Engagement',secondary=connection, backref='personnels',lazy='dynamic')
     diff_1= Column(Integer, default=0)
     diff_2  = Column(Integer, default=0)
     diff_3 = Column(Integer, default=0)
@@ -84,8 +95,8 @@ class Engagement(Base):
     jobtype = Column(String(100))
     difficulty = Column(Integer)
     hours = Column(Float)
-    startdate = Column(DateTime)
-    enddate = Column(DateTime)
+    startdate = Column(Date)
+    enddate = Column(Date)
     deadline = Column(Integer) #not calculated yet
     requirement = Column(Integer)
     personnel_list = Column(String(255), nullable = True)
@@ -101,6 +112,7 @@ class Engagement(Base):
         self.deadline = (enddate-startdate).days + 1
         self.requirement = requirement
         self.personnels = []
+        
     def priority(self,person): #wnsure that it is peeps
         if person in self.personnels:
           return person.name + " has been assigned to this engagement"
@@ -117,20 +129,14 @@ class Engagement(Base):
               person.diff_3 += 1
           prefresh(person)
           erefresh(self)
-          s.commit()
     
-    def assignment(self): #alot of work to be done here. cant do the sort
+    def assignment(self,ls): #alot of work to be done here. cant do the sort
         while self.requirement != 0:
-            all_personnel = s.query(Personnel).all()
-            ls = []
-            for each in all_personnel:
-                if each.name not in [x.name for x in self.personnels]:
-                    ls.append(each)
             #filter bottom 50th percentile 
             
             #constraint 1:Capacity
             ls.sort(key = lambda x: x.capacity(self.startdate))
-            ls = ls[:int(0.50*len(all_personnel))+1]
+            ls = ls[:int(0.50*len(ls))+1]
             
             #constraint 2: Busyness
             ls.sort(key=lambda x: x.busyness(self.enddate))
@@ -153,7 +159,6 @@ class Engagement(Base):
             prefresh(selected)
         erefresh(self)
         print("Requirement has already been fulfilled")
-        s.commit()
             
         
     #remove externally
@@ -163,7 +168,8 @@ class Engagement(Base):
             self.enddate = new_end_date
         else:
             print("Please check your new end date.")
-        s.commit()        
+               
+        
 def requires_access_level(access_level):
   def decorator(f):
       @wraps(f)
@@ -182,14 +188,14 @@ def requires_access_level(access_level):
 def prefresh(peeps):
   job = str([each.name for each in peeps.engagements])
   peeps.engagement_lists = job
-  s.commit()
 
 def erefresh(job):
   peeps = str([each.name for each in job.personnels])
   job.personnel_list = peeps
-  s.commit()
 ################################################################################################################  
-
+################################################################################################################
+  
+  
 @app.route('/')
 @app.route('/index')
 @login_required
@@ -363,7 +369,6 @@ def deletepersonnel():
   Base.metadata.create_all(engine)
   form = RemovePersonForm()
   if form.validate_on_submit():
-    try:
       pselected = s.query(Personnel).filter(Personnel.name == form.person.data).first()
       for each in pselected.engagements:
           each.requirement += 1
@@ -371,10 +376,7 @@ def deletepersonnel():
           erefresh(each)
       s.delete(pselected)
       s.commit()
-    except:
-      s.delete(pselected)
-      s.commit()
-    return render_template('deletedpers.html')
+      return render_template('deletedpers.html')
   return render_template('deletepersonnel.html',form=form)
 
 @app.route('/deleteengagement', methods=['GET', 'POST'])
@@ -405,4 +407,87 @@ def deleteengagement():
     return render_template('deletedeng.html')
   return render_template('deleteengagement.html',form=form)
 
-#@app.route('/assign_engagement', methods=['GET', 'POST'])
+@app.route('/assign_engagement', methods=['GET', 'POST'])
+def assign():
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind = engine)
+    s = Session()
+    Base.metadata.create_all(engine)
+    
+    form = AssignEngagementForm()
+    if form.validate_on_submit():
+        personname = ()
+        eselected =  s.query(Engagement).filter(Engagement.name == form.Engagement.data).first()
+        
+        #priority assignment
+        if form.Person1.data:
+            personname += (form.Person1.data,)
+        if form.Person2.data:
+            personname += (form.Person2.data,)
+        if personname:
+            for each in personname:
+                pselected = s.query(Personnel).filter(Personnel.name == each).first()
+                eselected.priority(pselected)
+        s.commit()
+        
+        #random assignment
+        all_personnel = s.query(Personnel).all()
+        ls = []
+        for each in all_personnel:
+            if each.name not in [x.name for x in eselected.personnels]:
+                ls.append(each)
+        eselected.assignment(ls)
+        s.commit()
+        return render_template('engagementassigned.html')
+    return render_template('assign_engagement.html',form = form)
+
+@app.route('/extenddeadline',methods = ['GET','POST'])
+def time_extension():
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind = engine)
+    s = Session()
+    Base.metadata.create_all(engine)
+    form = ExtendEngagementForm()
+    if form.validate_on_submit():
+        eselected = s.query(Engagement).filter(Engagement.name == form.Engagement.data).first()
+        eselected.extend_deadline(form.NewDate.data)
+        s.commit() 
+        return render_template('extendedeng.html')
+    return render_template('extenddeadline.html',form=form)
+
+@app.route('/pulloutpersonnel',methods = ['GET','POST'])
+def pullout_personnel():
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind=engine)
+    s = Session()
+    Base.metadata.create_all(engine)
+    
+    form = PulloutPersonnelForm()
+    
+    if form.validate_on_submit():
+        eselected =  s.query(Engagement).filter(Engagement.name == form.Engagement.data).first()
+        pselected = s.query(Personnel).filter(Personnel.name == form.Personnel.data).first()
+        if pselected not in eselected.personnels:
+            print("Error: Personnel not found in engagement") #How to raise Error instead?
+        else:
+            if eselected.difficulty == 1:
+                pselected.diff_1 -= 1
+            elif eselected.difficulty == 2:
+                pselected.diff_2 -= 1
+            else:
+                pselected.diff_3 -= 1
+            eselected.personnels.remove(pselected)
+            eselected.requirement += 1
+            prefresh(pselected)
+            erefresh(eselected)
+            s.commit()
+            return render_template('personnelpulled.html')
+    return render_template('pulloutpersonnel.html',form=form)
+
+
+
+
+                              
