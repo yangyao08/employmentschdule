@@ -1,18 +1,17 @@
 {% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
-
 {% block app_content %}
-	<h1>'The engagement has been assigned to: '</h1>
-    <table class="table table-hover" border = 1>
-        <thead>
-            <td>Name</td>
-        </thead>
+<h1> Engagement has been assigned to:</h1>
+      <table class="table table-hover" border = 1>
+         <thead>
+            <td>Personnel List</td>
+         </thead>
 
-        {% for row in rows %}
+         {% for row in rows %}
             <tr>
-            	<td>{{row["Name"]}}</td>
+               <td> {{ row["personnel_list"]}}</td>
             </tr>
          {% endfor %}
       </table>
-	<a href="/assign_engagement" title="Assign another engagement!">Assign another engagement</a> <br>
+
+      <a href = "/assign_engagement">Assign Another engagement</a>
 {% endblock %}

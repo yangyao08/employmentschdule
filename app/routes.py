@@ -5,7 +5,7 @@ import sqlite3
 from flask_login import current_user, login_user, logout_user, login_required
 from flask import render_template, flash, redirect, url_for, request, session
 from werkzeug.urls import url_parse
-from datetime import datetime
+from datetime import datetime,date
 from functools import wraps
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Table, Integer, String, Float, DateTime, ForeignKey, Date
@@ -149,7 +149,7 @@ class Engagement(Base):
             selected = random.choice(ls) #Random selection from resultant personnel
             self.requirement -= 1
             self.personnels.append(selected)
-            
+            ls.remove(selected)
             if self.difficulty == 1:
                 selected.diff_1 += 1
             elif self.difficulty == 2:
@@ -274,6 +274,7 @@ def viewpersonnel():
   Session = sessionmaker(bind=engine)
   s = Session() #Connection to the system
   Base.metadata.create_all(engine)
+  #timecheck()
   rows = s.execute('Select * from people')
   return render_template("view_personnel.html",rows = rows)
 
@@ -285,6 +286,7 @@ def viewengagements():
   Session = sessionmaker(bind=engine)
   s = Session() #Connection to the system
   Base.metadata.create_all(engine)
+  #timecheck()
   rows = s.execute('Select * from jobs')
   return render_template("view_engagements.html",rows = rows)
 
@@ -313,6 +315,7 @@ def searchengagement():
     Session = sessionmaker(bind=engine)
     s = Session() #Connection to the system
     Base.metadata.create_all(engine)
+    timecheck()
     rows = s.query(Engagement).filter(Engagement.name == form.Engagement.data).all()
 
     return render_template("view_engagements.html",rows = rows)
@@ -438,8 +441,16 @@ def assign():
             if each.name not in [x.name for x in eselected.personnels]:
                 ls.append(each)
         eselected.assignment(ls)
+        
         s.commit()
-        return render_template('engagementassigned.html')
+        engine = create_engine('sqlite:///Schedule.db', echo=False)
+        Base = declarative_base()
+        Session = sessionmaker(bind = engine)
+        s = Session()
+        Base.metadata.create_all(engine)
+        rows = s.execute('Select personnel_list from jobs')
+        
+        return render_template("assigned.html",rows = rows)
     return render_template('assign_engagement.html',form = form)
 
 @app.route('/extenddeadline',methods = ['GET','POST'])
@@ -471,6 +482,7 @@ def pullout_personnel():
         eselected =  s.query(Engagement).filter(Engagement.name == form.Engagement.data).first()
         pselected = s.query(Personnel).filter(Personnel.name == form.Personnel.data).first()
         if pselected not in eselected.personnels:
+            return render_template('500.html')
             print("Error: Personnel not found in engagement") #How to raise Error instead?
         else:
             if eselected.difficulty == 1:
@@ -487,7 +499,17 @@ def pullout_personnel():
             return render_template('personnelpulled.html')
     return render_template('pulloutpersonnel.html',form=form)
 
-
+def timecheck(): 
+    engine = create_engine('sqlite:///Schedule.db', echo=False)
+    Base = declarative_base()
+    Session = sessionmaker(bind=engine)
+    s = Session()
+    Base.metadata.create_all(engine)
+    currentdate = date.today()
+    all_engagement = s.query(Engagement).all
+    for each in all_engagement:
+        if each.end < currentdate:   
+            end_engagement(each.name)
 
 
                               

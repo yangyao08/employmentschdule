@@ -6,8 +6,12 @@
       <form action="" method="post">
       {{form.hidden_tag()}}   
         <p>
-            {{ form.Engagement.label }}<br>
-            {{ form.Engagement(size=32) }}<br>
+            {{ form.engagement.label }}<br>
+            {{ form.engagement(size=32) }}<br>
+        </p>
+        <p>
+            {{ form.prior_person.label }}<br>
+            {{ form.prior_person(size=32) }}<br>
         </p>
         <p>{{ form.submit() }}</p>
      </form>
